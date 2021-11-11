@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Комфорт</string>
+    <string name="home_activity_title">Дом</string>
+    <string name="booth_activity_title">Будка</string>
+
+    <string name="living_room">Гостиная</string>
+    <string name="dining_room">Столовая</string>
+    <string name="cook_room">Кухня</string>
+    <string name="hallway">Прихожая</string>
+    <string name="computer">Компьютер</string>
+    <string name="power_on">Включить</string>
+    <string name="power_off">Выключить</string>
+    <string name="cancel">Отменить</string>
+
+    <string name="celsius">℃</string>
+    <string name="power">Включен</string>
+    <string name="auto_mode">Автоматический режим</string>
+    <string name="temperature">Температура</string>
+    <string name="last_check">Проверялся</string>
+    <string name="heat_on_time">Время обогрева</string>
+    <string name="floor">Теплый пол</string>
+    <string name="heater">Обогреватель</string>
+</resources>
