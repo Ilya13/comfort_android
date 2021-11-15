@@ -78,7 +78,7 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         });
 
         switchPower.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if ((state.powerOn == 1 && isChecked) || state.powerOn == 0 && !isChecked) {
+            if ((state.powerOn && isChecked) || !state.powerOn && !isChecked) {
                 return;
             }
             Callback callback = new Callback<BoothState>() {
@@ -101,7 +101,7 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         });
 
         switchAutoMode.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if ((state.autoMode == 1 && isChecked) || state.autoMode == 0 && !isChecked) {
+            if (state.autoMode == isChecked) {
                 return;
             }
             BoothEspService.getInstance().getApi().setMode(isChecked ? 1 : 0).enqueue(new Callback<BoothState>() {
@@ -119,10 +119,10 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         });
 
         switchFloor.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if ((state.relayFloorOn == 1 && isChecked) || state.relayFloorOn == 0 && !isChecked) {
+            if (state.relayFloorOn == isChecked) {
                 return;
             }
-            if (state.autoMode == 0) {
+            if (!state.autoMode) {
                 BoothEspService.getInstance().getApi().setRelayState("floor", isChecked ? 1 : 0).enqueue(new Callback<BoothState>() {
                     @Override
                     public void onResponse(Call<BoothState> call, Response<BoothState> response) {
@@ -138,10 +138,10 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         });
 
         switchHeater.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if ((state.relayHeaterOn == 1 && isChecked) || state.relayHeaterOn == 0 && !isChecked) {
+            if (state.relayHeaterOn == isChecked) {
                 return;
             }
-            if (state.autoMode == 0) {
+            if (!state.autoMode) {
                 BoothEspService.getInstance().getApi().setRelayState("heater", isChecked ? 1 : 0).enqueue(new Callback<BoothState>() {
                     @Override
                     public void onResponse(Call<BoothState> call, Response<BoothState> response) {
@@ -215,27 +215,27 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         if (state == null) {
             return;
         }
-        textViewTempFloor.setText(state.temperatureFloor + getString(R.string.celsius));
-        textViewTempBooth.setText(state.temperatureAir + getString(R.string.celsius));
+        textViewTempFloor.setText(Math.round(state.temperatureFloor) + getString(R.string.celsius));
+        textViewTempBooth.setText(Math.round(state.temperatureAir) + getString(R.string.celsius));
         textViewLastCheck.setText(this.millisToHoursMinutesAndSeconds(state.lastCheck));
         textViewHeatOnTime.setText(this.millisToHoursMinutesAndSeconds(state.heatOnTime));
         editTemperature.setText(String.valueOf(state.controlTemperature));
 
-        switchPower.setChecked(state.powerOn == 1);
-        switchAutoMode.setChecked(state.autoMode == 1);
-        switchFloor.setChecked(state.relayFloorOn == 1);
-        switchHeater.setChecked(state.relayHeaterOn == 1);
+        switchPower.setChecked(state.powerOn);
+        switchAutoMode.setChecked(state.autoMode);
+        switchFloor.setChecked(state.relayFloorOn);
+        switchHeater.setChecked(state.relayHeaterOn);
 
-        editTemperature.setEnabled(state.powerOn == 1 && state.autoMode == 1);
-        switchFloor.setEnabled(state.powerOn == 1 && state.autoMode == 0);
-        switchHeater.setEnabled(state.powerOn == 1 && state.autoMode == 0);
+        editTemperature.setEnabled(state.powerOn && state.autoMode);
+        switchFloor.setEnabled(state.powerOn && !state.autoMode);
+        switchHeater.setEnabled(state.powerOn && !state.autoMode);
 
-        cardViewAutoMode.setVisibility(state.powerOn == 1 ? View.VISIBLE : View.GONE);
-        cardViewTemperature.setVisibility(state.powerOn == 1 && state.autoMode == 1 ? View.VISIBLE : View.GONE);
-        cardViewLastCheck.setVisibility(state.powerOn == 1 && state.autoMode == 1 ? View.VISIBLE : View.GONE);
-        cardViewHeatOnTime.setVisibility(state.powerOn == 1 ? View.VISIBLE : View.GONE);
-        cardViewFloor.setVisibility(state.powerOn == 1 ? View.VISIBLE : View.GONE);
-        cardViewHeater.setVisibility(state.powerOn == 1 ? View.VISIBLE : View.GONE);
+        cardViewAutoMode.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
+        cardViewTemperature.setVisibility(state.powerOn && state.autoMode ? View.VISIBLE : View.GONE);
+        cardViewLastCheck.setVisibility(state.powerOn && state.autoMode ? View.VISIBLE : View.GONE);
+        cardViewHeatOnTime.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
+        cardViewFloor.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
+        cardViewHeater.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
     }
 
     private String  millisToHoursMinutesAndSeconds(int millis) {
