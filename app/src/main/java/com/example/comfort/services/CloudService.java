@@ -1,31 +1,31 @@
 package com.example.comfort.services;
 
-import com.example.comfort.api.BoothEspApi;
+import com.example.comfort.api.CloudApi;
 
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class BoothEspService {
-    private static BoothEspService mInstance;
-    private static final String BASE_URL = "http://192.168.31.238";
+public class CloudService {
+    private static CloudService mInstance;
+    private static final String BASE_URL = "http://139.185.42.223/";
     private Retrofit mRetrofit;
 
-    private BoothEspService() {mRetrofit = new Retrofit.Builder()
+    private CloudService() {mRetrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
                 .build();
     }
 
-    public static BoothEspService getInstance() {
+    public static CloudService getInstance() {
         if (mInstance == null) {
-            mInstance = new BoothEspService();
+            mInstance = new CloudService();
         }
         return mInstance;
     }
 
-    public BoothEspApi getApi() {
-        return mRetrofit.create(BoothEspApi.class);
+    public CloudApi getApi() {
+        return mRetrofit.create(CloudApi.class);
     }
 }

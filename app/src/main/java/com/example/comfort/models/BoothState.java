@@ -1,6 +1,22 @@
 package com.example.comfort.models;
 
 public class BoothState {
+    public BoothState() {
+
+    }
+
+    public BoothState(BoothState state) {
+        temperatureFloor = state.temperatureFloor;
+        temperatureAir = state.temperatureAir;
+        powerOn = state.powerOn;
+        autoMode = state.autoMode;
+        relayFloorOn = state.relayFloorOn;
+        relayHeaterOn = state.relayHeaterOn;
+        lastCheck = state.lastCheck;
+        heatOnTime = state.heatOnTime;
+        controlTemperature = state.controlTemperature;
+    }
+
     public float temperatureFloor;
     public float temperatureAir;
     public boolean powerOn;

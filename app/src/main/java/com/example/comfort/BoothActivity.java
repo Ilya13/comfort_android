@@ -1,37 +1,39 @@
 package com.example.comfort;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.cardview.widget.CardView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.comfort.mediators.BoothMediator;
 import com.example.comfort.models.BoothState;
-import com.example.comfort.services.BoothEspService;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
+import io.reactivex.rxjava3.exceptions.CompositeException;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private BoothState state;
+    private final BoothMediator boothMediator = new BoothMediator();
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private TextView textViewTempBooth;
     private TextView textViewTempFloor;
     private TextView textViewLastCheck;
     private TextView textViewHeatOnTime;
-    private Switch switchPower;
-    private Switch switchAutoMode;
-    private Switch switchFloor;
-    private Switch switchHeater;
+    private SwitchCompat switchPower;
+    private SwitchCompat switchAutoMode;
+    private SwitchCompat switchFloor;
+    private SwitchCompat switchHeater;
     private EditText editTemperature;
     private CardView cardViewAutoMode;
     private CardView cardViewTemperature;
@@ -64,96 +66,40 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         cardViewFloor = findViewById(R.id.cardViewFloor);
         cardViewHeater = findViewById(R.id.cardViewHeater);
 
-        BoothEspService.getInstance().getApi().getState().enqueue(new Callback<BoothState>() {
-            @Override
-            public void onResponse(Call<BoothState> call, Response<BoothState> response) {
-                state = response.body();
-                updateComponentsState();
-            }
-
-            @Override
-            public void onFailure(Call<BoothState> call, Throwable t) {
-                toast(t.getMessage());
-            }
-        });
+        getState();
 
         switchPower.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if ((state.powerOn && isChecked) || !state.powerOn && !isChecked) {
+            if (state.powerOn == isChecked) {
                 return;
             }
-            Callback callback = new Callback<BoothState>() {
-                @Override
-                public void onResponse(Call<BoothState> call, Response<BoothState> response) {
-                    state = response.body();
-                    updateComponentsState();
-                }
-
-                @Override
-                public void onFailure(Call<BoothState> call, Throwable t) {
-                    toast(t.getMessage());
-                }
-            };
-            if (isChecked) {
-                BoothEspService.getInstance().getApi().powerOn().enqueue(callback);
-            } else {
-                BoothEspService.getInstance().getApi().powerOff().enqueue(callback);
-            }
+            state.powerOn = isChecked;
+            updateComponentsState();
+            putState();
         });
 
         switchAutoMode.setOnCheckedChangeListener((compoundButton, isChecked) -> {
             if (state.autoMode == isChecked) {
                 return;
             }
-            BoothEspService.getInstance().getApi().setMode(isChecked ? 1 : 0).enqueue(new Callback<BoothState>() {
-                @Override
-                public void onResponse(Call<BoothState> call, Response<BoothState> response) {
-                    state = response.body();
-                    updateComponentsState();
-                }
-
-                @Override
-                public void onFailure(Call<BoothState> call, Throwable t) {
-                    toast(t.getMessage());
-                }
-            });
+            state.autoMode = isChecked;
+            updateComponentsState();
+            putState();
         });
 
         switchFloor.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if (state.relayFloorOn == isChecked) {
+            if (state.relayFloorOn == isChecked || state.autoMode) {
                 return;
             }
-            if (!state.autoMode) {
-                BoothEspService.getInstance().getApi().setRelayState("floor", isChecked ? 1 : 0).enqueue(new Callback<BoothState>() {
-                    @Override
-                    public void onResponse(Call<BoothState> call, Response<BoothState> response) {
-                        state = response.body();
-                    }
-
-                    @Override
-                    public void onFailure(Call<BoothState> call, Throwable t) {
-                        toast(t.getMessage());
-                    }
-                });
-            }
+            state.relayFloorOn = isChecked;
+            putState();
         });
 
         switchHeater.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if (state.relayHeaterOn == isChecked) {
+            if (state.relayHeaterOn == isChecked || state.autoMode) {
                 return;
             }
-            if (!state.autoMode) {
-                BoothEspService.getInstance().getApi().setRelayState("heater", isChecked ? 1 : 0).enqueue(new Callback<BoothState>() {
-                    @Override
-                    public void onResponse(Call<BoothState> call, Response<BoothState> response) {
-                        state = response.body();
-                    }
-
-                    @Override
-                    public void onFailure(Call<BoothState> call, Throwable t) {
-                        toast(t.getMessage());
-                    }
-                });
-            }
+            state.relayHeaterOn = isChecked;
+            putState();
         });
 
         editTemperature.setOnEditorActionListener((textView, actionId, keyEvent) -> {
@@ -168,47 +114,29 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        this.compositeDisposable.dispose();
+    }
+
     private void onTemperatureChanged() {
         String text = editTemperature.getText().toString();
         if (!text.equals("")) {
             try {
-                int temperature = Integer.parseInt(text);
-                if (temperature >= 16 && temperature <= 24) {
-                    if (state.controlTemperature == temperature) {
-                        return;
-                    }
-                    BoothEspService.getInstance().getApi().setTemperature(temperature).enqueue(new Callback<BoothState>() {
-                        @Override
-                        public void onResponse(Call<BoothState> call, Response<BoothState> response) {
-                            state = response.body();
-                        }
-
-                        @Override
-                        public void onFailure(Call<BoothState> call, Throwable t) {
-                            toast(t.getMessage());
-                        }
-                    });
+                int temperature = Math.min(Math.max(Integer.parseInt(text), 15), 24);
+                if (state.controlTemperature == temperature) {
+                    return;
                 }
+                state.controlTemperature = temperature;
+                putState();
             } catch (NumberFormatException e) {}
         }
     }
 
     @Override
     public void onRefresh() {
-        BoothEspService.getInstance().getApi().getState().enqueue(new Callback<BoothState>() {
-            @Override
-            public void onResponse(Call<BoothState> call, Response<BoothState> response) {
-                mSwipeRefreshLayout.setRefreshing(false);
-                state = response.body();
-                updateComponentsState();
-            }
-
-            @Override
-            public void onFailure(Call<BoothState> call, Throwable t) {
-                mSwipeRefreshLayout.setRefreshing(false);
-                toast(t.getMessage());
-            }
-        });
+        getState();
     }
 
     private void updateComponentsState() {
@@ -236,6 +164,39 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         cardViewHeatOnTime.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
         cardViewFloor.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
         cardViewHeater.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
+    }
+
+    private void getState() {
+        mSwipeRefreshLayout.setRefreshing(true);
+        compositeDisposable.add(boothMediator.getBoothState()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        boothState -> {
+                            mSwipeRefreshLayout.setRefreshing(false);
+                            state = boothState;
+                            updateComponentsState();
+                        },
+                        error -> {
+                            mSwipeRefreshLayout.setRefreshing(false);
+                            if (error instanceof CompositeException && ((CompositeException) error).getExceptions().size() > 0) {
+                                error = ((CompositeException) error).getExceptions().get(0);
+                            }
+                            toast(error.getMessage());
+                        }
+                )
+        );
+    }
+
+    private void putState() {
+        compositeDisposable.add(boothMediator.putBoothState(state)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        () -> {},
+                        error -> toast(error.getMessage())
+                )
+        );
     }
 
     private String  millisToHoursMinutesAndSeconds(int millis) {
