@@ -117,7 +117,8 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        this.compositeDisposable.dispose();
+        compositeDisposable.dispose();
+        boothMediator.onDestroy();
     }
 
     private void onTemperatureChanged() {
