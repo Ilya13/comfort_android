@@ -33,7 +33,7 @@
             android:label="@string/booth_activity_title"
             android:theme="@style/FullscreenTheme" />
         <activity
-            android:name=".HomeActivity"
+            android:name=".HouseActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/home_activity_title"
             android:theme="@style/FullscreenTheme" />

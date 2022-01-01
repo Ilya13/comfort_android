@@ -11,7 +11,8 @@ public class BoothEspService {
     private static final String BASE_URL = "http://192.168.31.238";
     private Retrofit mRetrofit;
 
-    private BoothEspService() {mRetrofit = new Retrofit.Builder()
+    private BoothEspService() {
+        mRetrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava3CallAdapterFactory.create())

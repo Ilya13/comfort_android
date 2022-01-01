@@ -66,8 +66,6 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         cardViewFloor = findViewById(R.id.cardViewFloor);
         cardViewHeater = findViewById(R.id.cardViewHeater);
 
-        getState();
-
         switchPower.setOnCheckedChangeListener((compoundButton, isChecked) -> {
             if (state.powerOn == isChecked) {
                 return;
@@ -112,6 +110,13 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
             }
             return false;
         });
+
+        getState();
+    }
+
+    @Override
+    public void onRefresh() {
+        getState();
     }
 
     @Override
@@ -133,11 +138,6 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
                 putState();
             } catch (NumberFormatException e) {}
         }
-    }
-
-    @Override
-    public void onRefresh() {
-        getState();
     }
 
     private void updateComponentsState() {

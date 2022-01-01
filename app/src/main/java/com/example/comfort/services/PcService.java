@@ -1,40 +1,40 @@
 package com.example.comfort.services;
 
-import com.example.comfort.api.HomeApi;
+import com.example.comfort.api.PcApi;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory;
 
-public class HomeService {
-    private static HomeService mInstance;
+public class PcService {
+    private static PcService mInstance;
     private static final String HOME_IP = "192.168.31.52";
     private static final byte[] HOME_MAC = getMacBytes("04:d9:f5:36:17:60");
     private static final String BASE_URL = "http://" + HOME_IP;
     private Retrofit mRetrofit;
 
-    private HomeService() {
+    private PcService() {
         mRetrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
                 .build();
     }
 
-    public static HomeService getInstance() {
+    public static PcService getInstance() {
         if (mInstance == null) {
-            mInstance = new HomeService();
+            mInstance = new PcService();
         }
         return mInstance;
     }
 
-    public HomeApi getApi() {
-        return mRetrofit.create(HomeApi.class);
+    public PcApi getApi() {
+        return mRetrofit.create(PcApi.class);
     }
 
-    public static void wakeUp() {
+    public void wakeUp() {
         try {
             byte[] bytes = new byte[6 + 16 * HOME_MAC.length];
             for (int i = 0; i < 6; i++) {

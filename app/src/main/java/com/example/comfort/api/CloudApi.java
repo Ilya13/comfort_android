@@ -1,6 +1,7 @@
 package com.example.comfort.api;
 
 import com.example.comfort.models.BoothState;
+import com.example.comfort.models.HouseState;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Observable;
@@ -14,4 +15,10 @@ public interface CloudApi {
 
     @PUT("/booth/state")
     public Completable putBoothState(@Body BoothState body);
+
+    @GET("/house/state")
+    public Observable<HouseState> getHouseState();
+
+    @PUT("/house/state")
+    public Completable putHouseState(@Body HouseState body);
 }

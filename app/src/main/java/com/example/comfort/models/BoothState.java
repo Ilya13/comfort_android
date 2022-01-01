@@ -1,13 +1,12 @@
 package com.example.comfort.models;
 
 public class BoothState {
-    public BoothState() {
-
-    }
+    public BoothState() {}
 
     public BoothState(BoothState state) {
         temperatureFloor = state.temperatureFloor;
         temperatureAir = state.temperatureAir;
+        temperatureOutSide = state.temperatureOutSide;
         powerOn = state.powerOn;
         autoMode = state.autoMode;
         relayFloorOn = state.relayFloorOn;
@@ -19,6 +18,7 @@ public class BoothState {
 
     public float temperatureFloor;
     public float temperatureAir;
+    public float temperatureOutSide;
     public boolean powerOn;
     public boolean autoMode;
     public boolean relayFloorOn;

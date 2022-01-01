@@ -13,6 +13,7 @@
     <string name="cancel">Отменить</string>
 
     <string name="celsius">℃</string>
+    <string name="percents">%</string>
     <string name="power">Включен</string>
     <string name="auto_mode">Автоматический режим</string>
     <string name="temperature">Температура</string>
