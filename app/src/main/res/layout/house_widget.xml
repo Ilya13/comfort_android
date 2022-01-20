@@ -1,0 +1,43 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:backgroundTint="@android:color/white"
+    android:foregroundTint="@android:color/white">
+
+    <ImageView
+        android:id="@+id/imageViewLiving"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_sofa"
+        android:tint="@android:color/white" />
+
+
+    <ImageView
+        android:id="@+id/imageViewDining"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_dining_table"
+        android:tint="@android:color/white" />
+
+
+    <ImageView
+        android:id="@+id/imageViewKitchen"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_fridge"
+        android:tint="@android:color/white" />
+
+
+    <ImageView
+        android:id="@+id/imageViewHallway"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:src="@drawable/ic_wardrobe"
+        android:tint="@android:color/white" />
+
+</LinearLayout>

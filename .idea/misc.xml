@@ -7,6 +7,9 @@
         <entry key="..\:/Develop/Android/Comfort/app/src/main/res/layout/activity_home.xml" value="0.20520833333333333" />
         <entry key="..\:/Develop/Android/Comfort/app/src/main/res/layout/activity_house.xml" value="0.20572916666666666" />
         <entry key="..\:/Develop/Android/Comfort/app/src/main/res/layout/activity_main.xml" value="0.20572916666666666" />
+        <entry key="..\:/Develop/Android/Comfort/app/src/main/res/layout/comfort_widget.xml" value="0.36666666666666664" />
+        <entry key="..\:/Develop/Android/Comfort/app/src/main/res/layout/comfort_widget_configure.xml" value="0.36666666666666664" />
+        <entry key="..\:/Develop/Android/Comfort/app/src/main/res/layout/house_widget.xml" value="0.25" />
       </map>
     </option>
   </component>

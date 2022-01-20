@@ -12,17 +12,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.comfort.mediators.BoothMediator;
 import com.example.comfort.models.BoothState;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.exceptions.CompositeException;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
-    private BoothState state;
-    private final BoothMediator boothMediator = new BoothMediator();
+    private MainApplication app;
+    private BoothState boothState;
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -48,6 +46,8 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
 
         setContentView(R.layout.activity_booth);
 
+        app = (MainApplication) getApplication();
+
         mSwipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
         textViewTempBooth = findViewById(R.id.textViewTempBooth);
@@ -67,36 +67,36 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         cardViewHeater = findViewById(R.id.cardViewHeater);
 
         switchPower.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if (state.powerOn == isChecked) {
+            if (boothState.powerOn == isChecked) {
                 return;
             }
-            state.powerOn = isChecked;
+            boothState.powerOn = isChecked;
             updateComponentsState();
             putState();
         });
 
         switchAutoMode.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if (state.autoMode == isChecked) {
+            if (boothState.autoMode == isChecked) {
                 return;
             }
-            state.autoMode = isChecked;
+            boothState.autoMode = isChecked;
             updateComponentsState();
             putState();
         });
 
         switchFloor.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if (state.relayFloorOn == isChecked || state.autoMode) {
+            if (boothState.relayFloorOn == isChecked || boothState.autoMode) {
                 return;
             }
-            state.relayFloorOn = isChecked;
+            boothState.relayFloorOn = isChecked;
             putState();
         });
 
         switchHeater.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if (state.relayHeaterOn == isChecked || state.autoMode) {
+            if (boothState.relayHeaterOn == isChecked || boothState.autoMode) {
                 return;
             }
-            state.relayHeaterOn = isChecked;
+            boothState.relayHeaterOn = isChecked;
             putState();
         });
 
@@ -111,19 +111,47 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
             return false;
         });
 
-        getState();
+        subscribeOnState();
+        onRefresh();
     }
 
     @Override
     public void onRefresh() {
-        getState();
+        mSwipeRefreshLayout.setRefreshing(true);
+        app.refreshBoothState();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         compositeDisposable.dispose();
-        boothMediator.onDestroy();
+    }
+
+    private void subscribeOnState() {
+        compositeDisposable.add(
+                app.getBoothState$()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                boothState -> {
+                                    this.boothState = boothState;
+                                    updateComponentsState();
+                                }
+                        )
+        );
+        compositeDisposable.add(
+                app.getError$()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
+                                error -> {
+                                    if (error != "") {
+                                        mSwipeRefreshLayout.setRefreshing(false);
+                                        toast(error);
+                                    }
+                                }
+                        )
+        );
     }
 
     private void onTemperatureChanged() {
@@ -131,73 +159,45 @@ public class BoothActivity extends AppCompatActivity implements SwipeRefreshLayo
         if (!text.equals("")) {
             try {
                 int temperature = Math.min(Math.max(Integer.parseInt(text), 15), 24);
-                if (state.controlTemperature == temperature) {
+                if (boothState.controlTemperature == temperature) {
                     return;
                 }
-                state.controlTemperature = temperature;
+                boothState.controlTemperature = temperature;
                 putState();
             } catch (NumberFormatException e) {}
         }
     }
 
     private void updateComponentsState() {
-        if (state == null) {
+        if (boothState == null) {
             return;
         }
-        textViewTempFloor.setText(Math.round(state.temperatureFloor) + getString(R.string.celsius));
-        textViewTempBooth.setText(Math.round(state.temperatureAir) + getString(R.string.celsius));
-        textViewLastCheck.setText(this.millisToHoursMinutesAndSeconds(state.lastCheck));
-        textViewHeatOnTime.setText(this.millisToHoursMinutesAndSeconds(state.heatOnTime));
-        editTemperature.setText(String.valueOf(state.controlTemperature));
+        mSwipeRefreshLayout.setRefreshing(false);
+        textViewTempFloor.setText(Math.round(boothState.temperatureFloor) + getString(R.string.celsius));
+        textViewTempBooth.setText(Math.round(boothState.temperatureAir) + getString(R.string.celsius));
+        textViewLastCheck.setText(this.millisToHoursMinutesAndSeconds(boothState.lastCheck));
+        textViewHeatOnTime.setText(this.millisToHoursMinutesAndSeconds(boothState.heatOnTime));
+        editTemperature.setText(String.valueOf(boothState.controlTemperature));
 
-        switchPower.setChecked(state.powerOn);
-        switchAutoMode.setChecked(state.autoMode);
-        switchFloor.setChecked(state.relayFloorOn);
-        switchHeater.setChecked(state.relayHeaterOn);
+        switchPower.setChecked(boothState.powerOn);
+        switchAutoMode.setChecked(boothState.autoMode);
+        switchFloor.setChecked(boothState.relayFloorOn);
+        switchHeater.setChecked(boothState.relayHeaterOn);
 
-        editTemperature.setEnabled(state.powerOn && state.autoMode);
-        switchFloor.setEnabled(state.powerOn && !state.autoMode);
-        switchHeater.setEnabled(state.powerOn && !state.autoMode);
+        editTemperature.setEnabled(boothState.powerOn && boothState.autoMode);
+        switchFloor.setEnabled(boothState.powerOn && !boothState.autoMode);
+        switchHeater.setEnabled(boothState.powerOn && !boothState.autoMode);
 
-        cardViewAutoMode.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
-        cardViewTemperature.setVisibility(state.powerOn && state.autoMode ? View.VISIBLE : View.GONE);
-        cardViewLastCheck.setVisibility(state.powerOn && state.autoMode ? View.VISIBLE : View.GONE);
-        cardViewHeatOnTime.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
-        cardViewFloor.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
-        cardViewHeater.setVisibility(state.powerOn ? View.VISIBLE : View.GONE);
-    }
-
-    private void getState() {
-        mSwipeRefreshLayout.setRefreshing(true);
-        compositeDisposable.add(boothMediator.getBoothState()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        boothState -> {
-                            mSwipeRefreshLayout.setRefreshing(false);
-                            state = boothState;
-                            updateComponentsState();
-                        },
-                        error -> {
-                            mSwipeRefreshLayout.setRefreshing(false);
-                            if (error instanceof CompositeException && ((CompositeException) error).getExceptions().size() > 0) {
-                                error = ((CompositeException) error).getExceptions().get(0);
-                            }
-                            toast(error.getMessage());
-                        }
-                )
-        );
+        cardViewAutoMode.setVisibility(boothState.powerOn ? View.VISIBLE : View.GONE);
+        cardViewTemperature.setVisibility(boothState.powerOn && boothState.autoMode ? View.VISIBLE : View.GONE);
+        cardViewLastCheck.setVisibility(boothState.powerOn && boothState.autoMode ? View.VISIBLE : View.GONE);
+        cardViewHeatOnTime.setVisibility(boothState.powerOn ? View.VISIBLE : View.GONE);
+        cardViewFloor.setVisibility(boothState.powerOn ? View.VISIBLE : View.GONE);
+        cardViewHeater.setVisibility(boothState.powerOn ? View.VISIBLE : View.GONE);
     }
 
     private void putState() {
-        compositeDisposable.add(boothMediator.putBoothState(state)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(
-                        () -> {},
-                        error -> toast(error.getMessage())
-                )
-        );
+        app.putBoothState();
     }
 
     private String  millisToHoursMinutesAndSeconds(int millis) {

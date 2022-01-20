@@ -21,4 +21,7 @@
     <string name="heat_on_time">Время обогрева</string>
     <string name="floor">Теплый пол</string>
     <string name="heater">Обогреватель</string>
+    <string name="app_widget_description">Comfort</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
 </resources>
